@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Pedido Café Concert - Lista y cantidades</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 20px auto;
+    background: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  h1, h2 {
+    color: #333;
+  }
+  .item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: white;
+    border-radius: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  label {
+    flex: 1 1 auto;
+    min-width: 220px;
+    margin-right: 10px;
+  }
+  input[type='number'], input[type='text'] {
+    width: 60px;
+    padding: 4px;
+  }
+  #summary {
+    margin-top: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  #total {
+    margin-top: 15px;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #007bff;
+  }
+  .payment-section {
+    margin-top: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  .payment-section label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  .payment-section input {
+    width: 100%;
+    max-width: 250px;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+  #vuelto {
+    margin-top: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #28a745;
+  }
+  #vueltoNegativo {
+    color: #dc3545;
+  }
+  button {
+    padding: 10px 15px;
+    cursor: pointer;
+    background: #007bff;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    margin-top: 10px;
+    margin-right: 5px;
+    width: 100%;
+    max-width: 220px;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  #downloadBtn {
+    background: #28a745;
+  }
+  #downloadBtn:hover {
+    background: #218838;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    body {
+      margin: 10px;
+      padding: 15px;
+    }
+    .item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    label {
+      margin-right: 0;
+      margin-bottom: 6px;
+    }
+    input[type='number'], input[type='text'] {
+      width: 100%;
+    }
+    button {
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Pedido Café Concert ☕🍽️</h1>
+<p>Selecciona las cantidades para cada ítem o combo:</p>
+
+<h2>Ítems Individuales 🍽️</h2>
+<div id="individuals"></div>
+
+<h2>Combos 🥪🍷</h2>
+<div id="combos"></div>
+
+<div id="summary">
+  <h2>Detalle del Pedido 📋</h2>
+  <div id="orderDetails"><p style="color:#999;">Sin ítems seleccionados</p></div>
+  <div id="total">Total: $0</div>
+</div>
+
+<div class="payment-section">
+  <h2>Pago 💵</h2>
+  
+  <label for="clientName">Nombre del Cliente (Opcional):</label>
+  <input type="text" id="clientName" placeholder="Ingrese nombre del cliente" />
+  
+  <label for="received">Dinero Recibido ($):</label>
+  <input type="number" id="received" min="0" step="1" pattern="\d*" inputmode="numeric" placeholder="Ingrese monto recibido" />
+  
+  <div id="vuelto">Vuelto: $0</div>
+  
+  <button id="downloadBtn">📥 Descargar Comprobante (PDF)</button>
+</div>
+
+<script>
+  const items = {
+    sandwich: {name: 'Sándwich Gourmet', price: 5000},
+    empanada: {name: 'Empanada Jamón y Queso Gourmet', price: 4500},
+    aliado: {name: 'Aliado Jamón y Queso Tradicional', price: 3000},
+    vino: {name: 'Vino (copa)', price: 3000},
+    cerveza: {name: 'Cerveza (vaso)', price: 2500},
+    bebida: {name: 'Bebida (vaso)', price: 2000},
+    agua: {name: 'Agua (vaso)', price: 1500},
+    teCafe: {name: 'Té o Café', price: 2000}
+  };
+
+  const combos = {
+    sandwichVino: {name: 'Sándwich + Copa de Vino', price: 7500},
+    sandwichCerveza: {name: 'Sándwich + Cerveza', price: 7000},
+    sandwichBebida: {name: 'Sándwich + Bebida', price: 6500},
+    sandwichTeCafe: {name: 'Sándwich + Té o Café', price: 7000},
+    empanadaVino: {name: 'Empanada + Copa de Vino', price: 7000},
+    empanadaCerveza: {name: 'Empanada + Cerveza', price: 6500},
+    empanadaBebida: {name: 'Empanada + Bebida', price: 6500},
+    empanadaTeCafe: {name: 'Empanada + Té o Café', price: 6500},
+    aliadoVino: {name: 'Aliado + Copa de Vino', price: 5500},
+    aliadoCerveza: {name: 'Aliado + Cerveza', price: 5000},
+    aliadoBebida: {name: 'Aliado + Bebida', price: 4500},
+    aliadoTeCafe: {name: 'Aliado + Té o Café', price: 5000}
+  };
+
+  const individualsDiv = document.getElementById('individuals');
+  const combosDiv = document.getElementById('combos');
+  const totalDiv = document.getElementById('total');
+  const orderDetailsDiv = document.getElementById('orderDetails');
+  const clientNameInput = document.getElementById('clientName');
+  const receivedInput = document.getElementById('received');
+  const vueltoDiv = document.getElementById('vuelto');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  function createItem(id, item) {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `<label for="${id}">${item.name} — $${item.price.toLocaleString('es-CL')}</label>
+                    <input type="number" id="${id}" min="0" value="0" step="1" pattern="\\d*" inputmode="numeric" />`;
+    return div;
+  }
+
+  for (const [id, item] of Object.entries(items)) {
+    individualsDiv.appendChild(createItem(id, item));
+  }
+
+  for (const [id, combo] of Object.entries(combos)) {
+    combosDiv.appendChild(createItem(id, combo));
+  }
+
+  function calculateTotal() {
+    let total = 0;
+    let orderItems = [];
+
+    for (const [id, item] of Object.entries(items)) {
+      const qty = Math.floor(parseInt(document.getElementById(id).value) || 0);
+      if (qty > 0) {
+        const subtotal = qty * item.price;
+        total += subtotal;
+        orderItems.push({name: item.name, qty, price: item.price, subtotal});
+      }
+    }
+
+    for (const [id, combo] of Object.entries(combos)) {
+      const qty = Math.floor(parseInt(document.getElementById(id).value) || 0);
+      if (qty > 0) {
+        const subtotal = qty * combo.price;
+        total += subtotal;
+        orderItems.push({name: combo.name, qty, price: combo.price, subtotal});
+      }
+    }
+
+    if (orderItems.length === 0) {
+      orderDetailsDiv.innerHTML = '<p style="color: #999;">Sin ítems seleccionados</p>';
+    } else {
+      let html = '';
+      orderItems.forEach(item => {
+        html += `<div class="summary-item"><span>${item.qty}x ${item.name}</span><span>$${item.subtotal.toLocaleString('es-CL')}</span></div>`;
+      });
+      orderDetailsDiv.innerHTML = html;
+    }
+
+    totalDiv.innerText = `Total: $${total.toLocaleString('es-CL')}`;
+    calculateVuelto(total);
+    return {items: orderItems, total};
+  }
+
+  function calculateVuelto(total) {
+    const receivedRaw = receivedInput.value.trim();
+    const received = receivedRaw === '' ? 0 : Math.floor(Number(receivedRaw)) || 0;
+    const vuelto = received - total;
+
+    if (receivedRaw === '') {
+      vueltoDiv.innerHTML = `Vuelto: $0`;
+    } else if (vuelto < 0) {
+      vueltoDiv.innerHTML = `<span id="vueltoNegativo">Falta: $${Math.abs(vuelto).toLocaleString('es-CL')}</span>`;
+    } else {
+      vueltoDiv.innerHTML = `Vuelto: $${vuelto.toLocaleString('es-CL')}`;
+    }
+  }
+
+  function addListeners() {
+    const selectors = document.querySelectorAll('input[type=number]');
+    selectors.forEach(sel => {
+      sel.addEventListener('input', () => {
+        let val = sel.value;
+        val = val.replace(/[^0-9]/g, '');
+        sel.value = val === '' ? '0' : val;
+        calculateTotal();
+      });
+    });
+  }
+
+  receivedInput.addEventListener('input', () => {
+    calculateTotal();
+  });
+
+  downloadBtn.addEventListener('click', async () => {
+    const orderData = calculateTotal();
+    if (orderData.items.length === 0) {
+      alert('Por favor, agrega al menos un ítem al pedido.');
+      return;
+    }
+
+    const now = new Date();
+    
+    // Formatear fecha y hora
+    const dia = String(now.getDate()).padStart(2, '0');
+    const mes = String(now.getMonth() + 1).padStart(2, '0');
+    const anio = now.getFullYear();
+    const horas = String(now.getHours()).padStart(2, '0');
+    const minutos = String(now.getMinutes()).padStart(2, '0');
+    const segundos = String(now.getSeconds()).padStart(2, '0');
+    
+    const fecha = now.toLocaleDateString('es-CL');
+    const hora = now.toLocaleTimeString('es-CL');
+    const nombreArchivo = `Comprobante_CafeConcert_${dia}-${mes}-${anio}_${horas}-${minutos}-${segundos}`;
+    
+    const clientName = clientNameInput.value.trim();
+    const receivedRaw = receivedInput.value.trim();
+    const received = receivedRaw === '' ? 0 : Math.floor(Number(receivedRaw));
+    const vuelto = received - orderData.total;
+
+    let html = `
+      <div style="font-family: Arial; max-width: 400px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="text-align: center; margin: 0;">Café Concert ☕🍽️</h2>
+        <p style="text-align: center; color: #666; margin: 5px 0;">Comprobante de Pedido</p>
+        <hr />
+        <p style="margin: 5px 0;"><strong>Fecha:</strong> ${fecha}</p>
+        <p style="margin: 5px 0;"><strong>Hora:</strong> ${hora}</p>
+        ${clientName ? `<p style="margin: 5px 0;"><strong>Cliente:</strong> ${clientName}</p>` : ''}
+        <hr />
+        <h3 style="margin: 10px 0;">Detalle del Pedido:</h3>
+    `;
+
+    orderData.items.forEach(item => {
+      html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <span>${item.qty}x ${item.name}</span>
+        <span>$${item.subtotal.toLocaleString('es-CL')}</span>
+      </div>`;
+    });
+
+    html += `<hr />
+      <div style="display: flex; justify-content: space-between; font-size: 1.1em; font-weight: bold; margin: 10px 0;">
+        <span>Total:</span>
+        <span>$${orderData.total.toLocaleString('es-CL')}</span>
+      </div>
+    `;
+
+    if (received > 0) {
+      html += `
+        <p style="margin: 5px 0;"><strong>Dinero Recibido:</strong> $${received.toLocaleString('es-CL')}</p>
+        <p style="margin: 5px 0;"><strong>Vuelto:</strong> $${vuelto.toLocaleString('es-CL')}</p>
+      `;
+    }
+
+    html += `
+        <hr />
+        <p style="text-align: center; color: #999; font-size: 0.9em; margin: 5px 0;">Gracias por tu pedido</p>
+      </div>
+    `;
+
+    const element = document.createElement('div');
+    element.innerHTML = html;
+
+    const opt = {
+      margin: 5,
+      filename: `${nombreArchivo}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    try {
+      await html2pdf().set(opt).from(element).save();
+      console.log('PDF descargado correctamente');
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar el PDF. Intenta nuevamente.');
+    }
+  });
+
+  addListeners();
+  calculateTotal();
+</script>
+
+</body>
+</html>
