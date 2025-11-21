@@ -4,94 +4,138 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Pedido Café Concert</title>
-<!-- Usamos la versión más compatible de html2pdf -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
-  /* ESTILOS DE LA APP (No afectan al PDF) */
-  body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; max-width: 600px; margin: 0 auto; }
-  .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  h1 { text-align: center; color: #333; font-size: 1.5rem; }
+  /* ESTILOS DE LA APLICACIÓN */
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; padding: 20px; margin: 0; color: #333; }
+  .container { max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; }
+  
+  /* Columna Izquierda: Formulario */
+  .form-section { flex: 1; min-width: 300px; }
+  /* Columna Derecha: Previsualización */
+  .preview-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center; }
+
+  .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  h1 { text-align: center; color: #2c3e50; margin-top: 0; }
   h2 { font-size: 1.1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; }
-  
-  .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f9f9f9; }
-  label { font-size: 0.9rem; font-weight: bold; color: #444; flex: 1; }
-  input.qty { width: 50px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
-  
-  .total-box { font-size: 1.3rem; font-weight: bold; text-align: right; color: #007bff; }
-  .input-group { margin-bottom: 10px; }
-  .input-group label { display: block; margin-bottom: 5px; }
-  .input-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-  
-  button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; }
-  button:disabled { background: #ccc; }
+
+  .row-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #f1f1f1; padding-bottom: 5px; }
+  .row-item label { font-size: 0.9rem; flex: 1; }
+  .row-item input { width: 50px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+
+  .total-display { font-size: 1.2rem; font-weight: bold; text-align: right; color: #007bff; margin-top: 10px; }
+
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; margin-top: 10px; }
+  .btn-primary { background: #007bff; color: white; }
+  .btn-primary:hover { background: #0056b3; }
+  .btn-success { background: #28a745; color: white; }
+  .btn-success:hover { background: #218838; }
+
+  /* ESTILOS DE LA BOLETA (VISTA PREVIA) */
+  #receipt-preview {
+    background: #fff;
+    width: 300px; /* Ancho fijo tipo boleta */
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    margin-bottom: 20px;
+    display: none; /* Oculto hasta generar */
+    font-family: 'Courier New', Courier, monospace; /* Fuente tipo ticket */
+    color: #000;
+    border: 1px solid #ddd;
+  }
+
+  /* Estilos internos del ticket para asegurar impresión */
+  .ticket-header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
+  .ticket-body { margin-bottom: 15px; font-size: 13px; }
+  .ticket-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .ticket-total { border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 14px; }
+  .ticket-footer { text-align: center; margin-top: 20px; font-size: 11px; color: #444; }
+
 </style>
 </head>
 <body>
 
-<h1>☕ Café Concert 🍽️</h1>
+<h1>☕ Café Concert - Sistema de Pedidos 🍽️</h1>
 
-<div class="card">
-  <h2>Ítems Individuales</h2>
-  <div id="list-items"></div>
-</div>
+<div class="container">
+  
+  <!-- SECCIÓN DE INGRESO DE DATOS -->
+  <div class="form-section">
+    
+    <div class="card">
+      <h2>1. Ítems Individuales</h2>
+      <div id="list-individual"></div>
+    </div>
 
-<div class="card">
-  <h2>Combos</h2>
-  <div id="list-combos"></div>
-</div>
+    <div class="card">
+      <h2>2. Combos</h2>
+      <div id="list-combos"></div>
+    </div>
 
-<div class="card">
-  <h2>Resumen</h2>
-  <div id="preview-text" style="color:#666; font-size:0.9rem; margin-bottom:10px;">Sin ítems...</div>
-  <div id="display-total" class="total-box">Total: $0</div>
-</div>
+    <div class="card">
+      <h2>3. Datos y Totales</h2>
+      <div style="margin-bottom: 10px;">
+        <label style="display:block; font-size:0.9rem;">Cliente:</label>
+        <input type="text" id="clientName" style="width:100%; padding:8px; box-sizing:border-box;" placeholder="Nombre (Opcional)">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label style="display:block; font-size:0.9rem;">Dinero Recibido:</label>
+        <input type="number" id="received" style="width:100%; padding:8px; box-sizing:border-box;" placeholder="0">
+      </div>
+      
+      <div id="live-total" class="total-display">Total: $0</div>
+      <div id="live-vuelto" style="text-align:right; font-weight:bold; color:#28a745;">Vuelto: $0</div>
 
-<div class="card">
-  <h2>Pago</h2>
-  <div class="input-group">
-    <label>Nombre Cliente:</label>
-    <input type="text" id="clientName" placeholder="Opcional">
+      <button class="btn btn-primary" id="btn-preview">👁️ Generar Vista Previa</button>
+    </div>
+
   </div>
-  <div class="input-group">
-    <label>Dinero Recibido:</label>
-    <input type="number" id="received" placeholder="0">
-  </div>
-  <div id="display-vuelto" style="text-align: right; font-weight: bold; font-size: 1.1rem; color: #28a745;">Vuelto: $0</div>
-  <br>
-  <button id="btn-print">📄 DESCARGAR PDF</button>
-</div>
 
-<!-- CONTENEDOR OCULTO PARA EL PDF (Se llenará dinámicamente) -->
-<div id="pdf-container"></div>
+  <!-- SECCIÓN DE VISTA PREVIA -->
+  <div class="preview-section">
+    <div id="preview-placeholder" style="color:#777; margin-top:50px;">
+      <em>La boleta aparecerá aquí...</em>
+    </div>
+
+    <!-- AQUÍ SE PINTARÁ LA BOLETA -->
+    <div id="receipt-preview">
+      <!-- Contenido dinámico -->
+    </div>
+
+    <!-- BOTÓN DE DESCARGA (Oculto inicialmente) -->
+    <button class="btn btn-success" id="btn-download" style="display:none; max-width: 300px;">
+      📥 Descargar PDF Ahora
+    </button>
+  </div>
+
+</div>
 
 <script>
-  // 1. DATOS
+  // --- 1. CONFIGURACIÓN ---
   const products = {
     // Individuales
-    i1: {name: 'Sándwich Gourmet', price: 5000},
-    i2: {name: 'Empanada J/Q', price: 4500},
-    i3: {name: 'Aliado Tradicional', price: 3000},
-    i4: {name: 'Copa Vino', price: 3000},
-    i5: {name: 'Vaso Cerveza', price: 2500},
-    i6: {name: 'Vaso Bebida', price: 2000},
-    i7: {name: 'Vaso Agua', price: 1500},
-    i8: {name: 'Té o Café', price: 2000},
+    i1: { name: 'Sándwich Gourmet', price: 5000 },
+    i2: { name: 'Empanada J/Q', price: 4500 },
+    i3: { name: 'Aliado Tradicional', price: 3000 },
+    i4: { name: 'Copa Vino', price: 3000 },
+    i5: { name: 'Vaso Cerveza', price: 2500 },
+    i6: { name: 'Vaso Bebida', price: 2000 },
+    i7: { name: 'Té o Café', price: 2000 },
     // Combos
-    c1: {name: 'Combo Sándwich+Vino', price: 7500},
-    c2: {name: 'Combo Sándwich+Cerveza', price: 7000},
-    c3: {name: 'Combo Sándwich+Bebida', price: 6500},
-    c4: {name: 'Combo Empanada+Vino', price: 7000},
-    c5: {name: 'Combo Empanada+Cerveza', price: 6500},
-    c6: {name: 'Combo Empanada+Bebida', price: 6500}
+    c1: { name: 'Combo Sándwich+Vino', price: 7500 },
+    c2: { name: 'Combo Sándwich+Cerveza', price: 7000 },
+    c3: { name: 'Combo Sándwich+Bebida', price: 6500 },
+    c4: { name: 'Combo Empanada+Vino', price: 7000 },
+    c5: { name: 'Combo Empanada+Cerveza', price: 6500 }
   };
 
-  // 2. RENDERIZADO EN PANTALLA
-  const listItems = document.getElementById('list-items');
-  const listCombos = document.getElementById('list-combos');
+  // --- 2. GENERAR INPUTS ---
+  const divInd = document.getElementById('list-individual');
+  const divCom = document.getElementById('list-combos');
 
-  function renderRow(id, item, container) {
+  function createInput(id, item, container) {
     const div = document.createElement('div');
-    div.className = 'row';
+    div.className = 'row-item';
     div.innerHTML = `
       <label>${item.name} ($${item.price})</label>
       <input type="number" min="0" class="qty-input" data-id="${id}" placeholder="0">
@@ -100,160 +144,144 @@
   }
 
   Object.entries(products).forEach(([k, v]) => {
-    // Separar visualmente por ID (i = individual, c = combo)
-    if(k.startsWith('i')) renderRow(k, v, listItems);
-    else renderRow(k, v, listCombos);
+    if(k.startsWith('i')) createInput(k, v, divInd);
+    else createInput(k, v, divCom);
   });
 
-  // 3. CÁLCULOS
+  // --- 3. CÁLCULOS EN VIVO ---
   function calculate() {
     let total = 0;
     let items = [];
-    
-    document.querySelectorAll('.qty-input').forEach(input => {
-      const val = parseInt(input.value) || 0;
+    document.querySelectorAll('.qty-input').forEach(inp => {
+      const val = parseInt(inp.value) || 0;
       if(val > 0) {
-        const pid = input.dataset.id;
-        const prod = products[pid];
+        const prod = products[inp.dataset.id];
         const subtotal = val * prod.price;
         total += subtotal;
         items.push({ ...prod, qty: val, subtotal });
       }
     });
-
-    // Vuelto
+    
     const received = parseInt(document.getElementById('received').value) || 0;
     const vuelto = received - total;
+    const client = document.getElementById('clientName').value || 'Cliente General';
 
-    return { total, items, received, vuelto };
+    return { total, items, received, vuelto, client };
   }
 
-  function updateUI() {
+  function updateLiveUI() {
     const data = calculate();
-    document.getElementById('display-total').innerText = `Total: $${data.total.toLocaleString('es-CL')}`;
+    document.getElementById('live-total').innerText = `Total: $${data.total.toLocaleString('es-CL')}`;
+    const vEl = document.getElementById('live-vuelto');
     
-    const vueltoEl = document.getElementById('display-vuelto');
     if(data.received > 0) {
-      vueltoEl.innerText = data.vuelto >= 0 
+      vEl.innerText = data.vuelto >= 0 
         ? `Vuelto: $${data.vuelto.toLocaleString('es-CL')}` 
         : `Falta: $${Math.abs(data.vuelto).toLocaleString('es-CL')}`;
-      vueltoEl.style.color = data.vuelto >= 0 ? '#28a745' : '#dc3545';
+      vEl.style.color = data.vuelto >= 0 ? '#28a745' : '#dc3545';
     } else {
-      vueltoEl.innerText = "Vuelto: $0";
-    }
-
-    // Preview texto
-    const preview = document.getElementById('preview-text');
-    if(data.items.length === 0) preview.innerText = "Sin ítems...";
-    else {
-      preview.innerHTML = data.items.map(i => `<div>${i.qty} x ${i.name}</div>`).join('');
+      vEl.innerText = "Vuelto: $0";
+      vEl.style.color = "#28a745";
     }
   }
 
-  // Listeners
-  document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateUI));
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateLiveUI));
 
-  // 4. GENERACIÓN PDF (ESTRATEGIA TABLA + FONDO BLANCO)
-  document.getElementById('btn-print').addEventListener('click', async () => {
+  // --- 4. GENERAR VISTA PREVIA (PASO CLAVE) ---
+  document.getElementById('btn-preview').addEventListener('click', () => {
     const data = calculate();
-    if(data.items.length === 0) return alert("Agrega productos primero");
-
-    const btn = document.getElementById('btn-print');
-    btn.disabled = true;
-    btn.innerText = "Generando...";
+    if(data.items.length === 0) return alert("Selecciona productos primero.");
 
     const now = new Date();
     const fecha = now.toLocaleDateString('es-CL');
     const hora = now.toLocaleTimeString('es-CL');
-    const cliente = document.getElementById('clientName').value || "Cliente General";
 
-    // CREAMOS EL HTML DEL PDF USANDO TABLAS (Más robusto para html2pdf)
-    // Definimos estilos INLINE explícitos (color: black, background: white)
-    const itemRows = data.items.map(item => `
+    // Construimos el HTML INTERNO de la boleta
+    // Usamos <table> para garantizar alineación en el PDF
+    let itemsHtml = data.items.map(i => `
       <tr>
-        <td style="padding: 4px 0; border-bottom: 1px dotted #ccc;">${item.qty} x ${item.name}</td>
-        <td style="padding: 4px 0; border-bottom: 1px dotted #ccc; text-align: right;">$${item.subtotal.toLocaleString('es-CL')}</td>
+        <td style="padding:2px 0;">${i.qty} x ${i.name}</td>
+        <td style="text-align:right;">$${i.subtotal.toLocaleString('es-CL')}</td>
       </tr>
     `).join('');
 
-    const content = `
-      <div style="width: 270px; padding: 10px; background-color: #ffffff; color: #000000; font-family: Helvetica, sans-serif; border: 1px solid white;">
-        
-        <div style="text-align: center; margin-bottom: 15px;">
-          <h2 style="margin: 0; font-size: 18px;">☕ CAFÉ CONCERT</h2>
-          <p style="margin: 2px 0; font-size: 12px;">COMPROBANTE</p>
-          <p style="margin: 2px 0; font-size: 12px;">${fecha} - ${hora}</p>
+    const receiptHtml = `
+      <div class="ticket-header">
+        <h3 style="margin:0; font-size:18px;">CAFÉ CONCERT</h3>
+        <p style="margin:2px 0 10px 0; font-size:12px;">COMPROBANTE DE PEDIDO</p>
+        <div style="font-size:12px; text-align:left;">
+          <p style="margin:2px 0;">FECHA: ${fecha} ${hora}</p>
+          <p style="margin:2px 0;">CLIENTE: ${data.client}</p>
         </div>
+      </div>
 
-        <div style="margin-bottom: 10px; font-size: 12px;">
-          <strong>Cliente:</strong> ${cliente}
+      <table style="width:100%; font-size:12px; border-collapse:collapse;">
+        <tbody>${itemsHtml}</tbody>
+      </table>
+
+      <div class="ticket-total">
+        <div style="display:flex; justify-content:space-between;">
+          <span>TOTAL:</span>
+          <span>$${data.total.toLocaleString('es-CL')}</span>
         </div>
-
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px;">
-          ${itemRows}
-        </table>
-
-        <div style="border-top: 2px solid #000; margin-top: 10px; padding-top: 5px;">
-          <table style="width: 100%; font-size: 14px; font-weight: bold;">
-            <tr>
-              <td>TOTAL</td>
-              <td style="text-align: right;">$${data.total.toLocaleString('es-CL')}</td>
-            </tr>
-          </table>
-        </div>
-
         ${data.received > 0 ? `
-          <div style="margin-top: 5px; font-size: 12px;">
-            <table style="width: 100%;">
-              <tr><td>Efectivo:</td><td style="text-align: right;">$${data.received.toLocaleString('es-CL')}</td></tr>
-              <tr><td>Vuelto:</td><td style="text-align: right;">$${data.vuelto.toLocaleString('es-CL')}</td></tr>
-            </table>
-          </div>
-        ` : ''}
-        
-        <div style="text-align: center; margin-top: 20px; font-size: 10px; color: #444;">
-          <p>Gracias por su preferencia</p>
+        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:normal; margin-top:5px;">
+          <span>Efectivo:</span>
+          <span>$${data.received.toLocaleString('es-CL')}</span>
         </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:normal;">
+          <span>Vuelto:</span>
+          <span>$${data.vuelto.toLocaleString('es-CL')}</span>
+        </div>
+        ` : ''}
+      </div>
+
+      <div class="ticket-footer">
+        <p>*** Gracias por su preferencia ***</p>
       </div>
     `;
 
-    // ELEMENTO TEMPORAL
-    // Lo agregamos al body para asegurar que el navegador lo renderice
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    // Estilos para que no moleste al usuario pero sí sea "visible" para la librería
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.top = '0';
-    tempDiv.style.left = '0';
-    tempDiv.style.zIndex = '-9999'; // Detrás de todo
-    tempDiv.style.background = '#ffffff'; // Fondo blanco explícito
+    // Inyectar al DOM visible
+    const previewDiv = document.getElementById('receipt-preview');
+    previewDiv.innerHTML = receiptHtml;
     
-    document.body.appendChild(tempDiv);
+    // Mostrar elementos
+    document.getElementById('preview-placeholder').style.display = 'none';
+    previewDiv.style.display = 'block';
+    document.getElementById('btn-download').style.display = 'block';
+  });
+
+  // --- 5. DESCARGAR LO QUE YA VEMOS ---
+  document.getElementById('btn-download').addEventListener('click', async () => {
+    const element = document.getElementById('receipt-preview');
+    const btn = document.getElementById('btn-download');
+    
+    btn.innerText = "Generando...";
+    btn.disabled = true;
 
     const opt = {
-      margin:       1,
-      filename:     `Pedido_${now.getTime()}.pdf`,
+      margin:       0,
+      filename:     `Pedido_${Date.now()}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false }, // Escala mejora calidad texto
-      jsPDF:        { unit: 'mm', format: [80, 200], orientation: 'portrait' } // Formato Ticket
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true,
+        logging: false
+      },
+      jsPDF:        { unit: 'mm', format: [80, 200], orientation: 'portrait' }
     };
 
     try {
-      // Esperamos un momento para que el navegador pinte el elemento temporal
-      await new Promise(r => setTimeout(r, 200));
-      await html2pdf().set(opt).from(tempDiv).save();
-    } catch (error) {
-      console.error(error);
-      alert("Error al crear PDF");
+      await html2pdf().set(opt).from(element).save();
+    } catch (err) {
+      console.error(err);
+      alert("Error al descargar");
     } finally {
-      // Limpieza
-      if (document.body.contains(tempDiv)) {
-        document.body.removeChild(tempDiv);
-      }
+      btn.innerText = "📥 Descargar PDF Ahora";
       btn.disabled = false;
-      btn.innerText = "📄 DESCARGAR PDF";
     }
   });
+
 </script>
 </body>
 </html>
