@@ -52,6 +52,7 @@
     border-bottom: 2px solid #eee;
     padding-bottom: 5px;
     color: #e67e22;
+    line-height: 1.4;
   }
 
   /* --- 3. LISTA DE PRODUCTOS --- */
@@ -75,7 +76,7 @@
   }
   
   .item-price { color: #27ae60; font-weight: bold; font-size: 0.9rem; }
-  .item-desc { font-size: 0.75rem; color: #777; display: block; margin-top: 2px; }
+  .item-desc { font-size: 0.75rem; color: #777; display: block; margin-top: 2px; font-style: italic; }
 
   /* Inputs táctiles */
   input[type="number"].qty {
@@ -184,34 +185,63 @@
 </div>
 
 <script>
-  // --- 1. DATOS ---
+  // --- 1. DATOS ACTUALIZADOS ---
   const menuData = [
     {
       title: "Para Comer 🍔🥪",
       items: [
-        { name: 'Sándwich Gourmet', price: 5000, desc: 'Pollo 🍗, tomate 🍅, palta 🥑, cebolla 🧅' },
-        { name: 'Empanada Jamón/Queso', price: 4500, desc: 'Masa de horno 🥟' },
-        { name: 'Aliado Tradicional', price: 3000, desc: 'Jamón 🥓 y queso 🧀' }
+        { 
+          name: 'Sándwich Gourmet', 
+          price: 5000, 
+          desc: 'Pan hojaldre 🥐, pollo 🍗, tomate 🍅, palta 🥑, cebolla caramelizada 🧅 y lacto mayo' 
+        },
+        { 
+          name: 'Empanada Jamón y Queso Gourmet', 
+          price: 4500, 
+          desc: 'Jamón 🥓 y queso 🧀 en masa de horno 🥟' 
+        },
+        { 
+          name: 'Aliado Jamón y Queso Tradicional', 
+          price: 3000, 
+          desc: 'Jamón 🥓 y queso 🧀 en pan de molde 🍞 con base de mayonesa' 
+        }
       ]
     },
     {
-      title: "Para Beber 🍷🍺",
+      title: "Para Beber 🍷🍺☕",
       items: [
         { name: 'Vino (copa) 🍷', price: 3000 },
         { name: 'Cerveza (vaso) 🍺', price: 2500 },
         { name: 'Bebida (vaso) 🥤', price: 2000 },
+        { name: 'Agua (vaso) 💧', price: 1500 },
         { name: 'Té o Café ☕', price: 2000 }
       ]
     },
     {
-      title: "Combos 🥪🍷",
+      title: "Combos Sándwich Gourmet 🥪🍷 <br><span style='font-size:0.85em; font-weight:normal; color:#555;'>(Sándwich solo: $5.000)</span>",
       items: [
-        { name: 'Sándwich + Vino', price: 7500 },
-        { name: 'Sándwich + Cerveza', price: 7000 },
-        { name: 'Sándwich + Bebida', price: 6500 },
-        { name: 'Empanada + Vino', price: 7000 },
-        { name: 'Empanada + Cerveza', price: 6500 },
-        { name: 'Aliado + Té/Café', price: 5000 }
+        { name: 'Sándwich + Copa de Vino 🍷', price: 7500 },
+        { name: 'Sándwich + Cerveza 🍺', price: 7000 },
+        { name: 'Sándwich + Bebida 🥤', price: 6500 },
+        { name: 'Sándwich + Té o Café ☕', price: 7000 }
+      ]
+    },
+    {
+      title: "Combos Empanada Gourmet 🥟🍷 <br><span style='font-size:0.85em; font-weight:normal; color:#555;'>(Empanada sola: $4.500)</span>",
+      items: [
+        { name: 'Empanada + Copa de Vino 🍷', price: 7000 },
+        { name: 'Empanada + Cerveza 🍺', price: 6500 },
+        { name: 'Empanada + Bebida 🥤', price: 6500 },
+        { name: 'Empanada + Té o Café ☕', price: 6500 }
+      ]
+    },
+    {
+      title: "Combos Aliado Tradicional 🥪🍷 <br><span style='font-size:0.85em; font-weight:normal; color:#555;'>(Aliado solo: $3.000)</span>",
+      items: [
+        { name: 'Aliado + Copa de Vino 🍷', price: 5500 },
+        { name: 'Aliado + Cerveza 🍺', price: 5000 },
+        { name: 'Aliado + Bebida 🥤', price: 4500 },
+        { name: 'Aliado + Té o Café ☕', price: 5000 }
       ]
     }
   ];
@@ -225,7 +255,7 @@
     let html = `<h2>${section.title}</h2>`;
     
     section.items.forEach(item => {
-      // CORRECCIÓN 1: Agregado min="0" al input
+      // Input con min="0" para evitar negativos desde HTML
       html += `
         <div class="item-row">
           <div class="item-info">
@@ -285,7 +315,7 @@
     }
   }
 
-  // CORRECCIÓN 2: Validación en tiempo real para evitar negativos
+  // Validación en tiempo real para evitar negativos
   document.addEventListener('input', (e) => {
     
     if(e.target.matches('.qty')) {
