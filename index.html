@@ -225,6 +225,7 @@
     let html = `<h2>${section.title}</h2>`;
     
     section.items.forEach(item => {
+      // CORRECCIÓN 1: Agregado min="0" al input
       html += `
         <div class="item-row">
           <div class="item-info">
@@ -235,6 +236,7 @@
           <input type="number" class="qty" 
             data-name="${item.name}" 
             data-price="${item.price}" 
+            min="0"
             placeholder="0" inputmode="numeric">
         </div>
       `;
@@ -283,8 +285,24 @@
     }
   }
 
+  // CORRECCIÓN 2: Validación en tiempo real para evitar negativos
   document.addEventListener('input', (e) => {
-    if(e.target.matches('.qty') || e.target.id === 'received') updateUI();
+    
+    if(e.target.matches('.qty')) {
+      // Si el valor es negativo, lo ponemos en 0
+      if(e.target.value < 0) {
+        e.target.value = 0;
+      }
+      updateUI();
+    }
+    
+    if(e.target.id === 'received') {
+      // Evitar dinero recibido negativo también
+      if(e.target.value < 0) {
+        e.target.value = 0;
+      }
+      updateUI();
+    }
   });
 
   // --- 4. BOTÓN VISTA PREVIA ---
