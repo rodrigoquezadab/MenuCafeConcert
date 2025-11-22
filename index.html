@@ -1,388 +1,394 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8" />
+<!-- Viewport para asegurar que se vea bien en móviles -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Pedido Café Concert</title>
 
-<!-- Dependencias -->
+<!-- USAMOS LAS LIBRERÍAS CLÁSICAS QUE SON MÁS ESTABLES PARA ESTO -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-  :root{
-    --bg: #eef2f5;
-    --card: #ffffff;
-    --accent: #2c3e50;
-    --green: #27ae60;
-    --muted: #777;
+  /* --- 1. ESTILOS BASE (MOBILE FIRST) --- */
+  * {
+    box-sizing: border-box; /* Previene que el padding rompa el ancho */
   }
 
-  /* Global */
-  body{
-    margin:0;
-    padding:14px;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg);
-    color: #222;
+  body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 10px;
+    color: #333;
   }
 
-  h1{ text-align:center; margin:0 0 12px 0; color:var(--accent); font-size:1.4rem; }
-
-  /* Layout */
-  .container{
-    max-width: 920px;
+  .container {
+    max-width: 600px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 360px;
-    gap: 16px;
-    align-items: start;
+    padding-bottom: 50px;
   }
 
-  @media (max-width:880px){
-    .container{ grid-template-columns: 1fr; }
+  h1 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin: 10px 0 20px 0;
   }
 
-  .card{
-    background: var(--card);
+  /* --- 2. TARJETAS --- */
+  .card {
+    background: white;
     border-radius: 10px;
-    padding: 12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   }
 
-  /* Compact single-line items */
-  .row-item{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:6px 4px;
-    border-bottom:1px dashed #f1f1f1;
-    min-height:36px;
-  }
-  .row-item:last-child{ border-bottom:none; }
-
-  .row-item label{
-    flex:1 1 auto;
-    font-size:0.95rem;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    margin-right:8px;
+  h2 {
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+    color: #e67e22;
   }
 
-  .row-item .price{ flex:0 0 90px; text-align:right; color:var(--green); font-weight:600; white-space:nowrap; }
+  /* --- 3. LISTA DE PRODUCTOS --- */
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+  }
+  .item-row:last-child { border-bottom: none; margin-bottom: 0; }
 
-  .row-item input.qty{
-    flex: 0 0 64px;
-    width:64px;
-    padding:6px;
-    font-size:0.95rem;
-    text-align:center;
-    border-radius:6px;
-    border:1px solid #ccc;
-    background:#fff;
+  .item-info { flex: 1; padding-right: 10px; }
+  
+  .item-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: block;
+    color: #2c3e50;
+  }
+  
+  .item-price { color: #27ae60; font-weight: bold; font-size: 0.9rem; }
+  .item-desc { font-size: 0.75rem; color: #777; display: block; margin-top: 2px; }
+
+  /* Inputs táctiles */
+  input[type="number"].qty {
+    width: 60px;
+    height: 40px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    background: #f9f9f9;
   }
 
-  /* Controls/summary */
-  .controls{ display:flex; flex-direction:column; gap:8px; }
-  .controls .input-block input{ width:100%; padding:8px; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; }
+  /* --- 4. PAGOS Y TOTALES --- */
+  .form-group { margin-bottom: 10px; }
+  .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+  .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
 
-  .total-display{ text-align:right; font-weight:700; color:#1f618d; font-size:1.05rem; }
-  .vuelto{ text-align:right; font-weight:700; color:var(--green); font-size:0.98rem; }
+  .total-display { text-align: right; font-size: 1.4rem; font-weight: bold; color: #2980b9; margin-top: 10px; }
+  #vuelto-display { text-align: right; font-weight: bold; color: #27ae60; margin-bottom: 10px; }
 
-  .btn{ width:100%; padding:12px; border-radius:8px; border:none; font-weight:700; cursor:pointer; }
-  .btn-primary{ background:#3498db; color:#fff; }
-  .btn-success{ background:var(--green); color:#fff; }
-
-  /* Receipt preview (on-screen) */
-  #receipt-preview{
-    background:var(--card);
-    width:300px;            /* visible width on screen */
-    padding:14px;
-    border-radius:8px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.12);
-    display:none;
-    color:#000;
-    font-family: Arial, Helvetica, sans-serif;
-    border:1px solid #e2e2e2;
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: 0.2s;
+  }
+  .btn-preview { background: #3498db; color: white; }
+  .btn-download { background: #27ae60; color: white; margin-top: 15px; }
+  
+  /* --- 5. VISTA PREVIA (ESTILO RESPONSIVE PERO IMPRIMIBLE) --- */
+  #preview-area {
+    display: none;
+    margin-top: 20px;
+    background: #e9ecef;
+    padding: 15px;
+    border-radius: 10px;
   }
 
-  .ticket-header{ text-align:center; margin-bottom:8px; }
-  .ticket-header h3{ margin:0; font-size:18px; color:var(--accent); }
-  .ticket-meta{ font-size:12px; color:#666; margin-top:6px; text-align:left; }
+  /* El recibo visual */
+  #receipt-visual {
+    background: white;
+    padding: 20px;
+    /* Ancho fluido para móvil, pero suficiente info para PDF */
+    width: 100%; 
+    margin: 0 auto;
+    color: #000;
+    font-family: Arial, sans-serif;
+    border-radius: 5px;
+  }
 
-  .ticket-table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
-  .ticket-table td{ padding:4px 0; vertical-align:middle; }
-  .ticket-table .desc{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } /* single-line */
-  .ticket-table .amount{ text-align:right; width:110px; white-space:nowrap; }
-
-  .ticket-total{ border-top:2px solid #000; margin-top:8px; padding-top:8px; font-weight:700; display:flex; justify-content:space-between; font-size:15px; }
-  .ticket-footer{ text-align:center; color:#777; font-size:12px; margin-top:12px; }
-
-  /* Small helper */
-  .small-note{ font-size:0.85rem; color:var(--muted); margin:0; }
+  /* Tabla simple que funciona bien en móvil y papel */
+  .visual-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .visual-table th { text-align: left; border-bottom: 2px solid #333; padding: 5px 0; }
+  .visual-table td { border-bottom: 1px solid #eee; padding: 8px 0; vertical-align: top; }
+  .text-right { text-align: right; }
+  
+  /* Evitar quiebre de palabras en precios */
+  .no-wrap { white-space: nowrap; }
 
 </style>
 </head>
 <body>
 
-<h1>☕ Café Concert - Sistema de Pedidos 🍽️</h1>
-
 <div class="container">
+  <h1>Café Concert ☕🍽️</h1>
 
-  <!-- LEFT: form -->
+  <!-- Contenedor del Menú -->
+  <div id="menu-container"></div>
+
+  <!-- Contenedor Pago -->
   <div class="card">
-    <h2 style="margin:0 0 10px 0;">1. Selecciona Productos</h2>
-
-    <!-- Individuales -->
-    <div style="margin-bottom:10px;">
-      <h3 style="margin:0 0 8px 0; font-size:1rem;">Ítems Individuales</h3>
-      <div id="list-individual"></div>
+    <h2>Pago 💵</h2>
+    
+    <div class="form-group">
+      <label>Cliente (Opcional):</label>
+      <input type="text" id="clientName">
+    </div>
+    
+    <div class="form-group">
+      <label>Dinero Recibido ($):</label>
+      <input type="tel" id="received" placeholder="0">
     </div>
 
-    <!-- Combos -->
-    <div style="margin-bottom:8px;">
-      <h3 style="margin:0 0 8px 0; font-size:1rem;">Combos</h3>
-      <div id="list-combos"></div>
-    </div>
+    <div class="total-display" id="total-text">Total: $0</div>
+    <div id="vuelto-display">Vuelto: $0</div>
 
-    <!-- Controls / totals -->
-    <div class="controls" style="margin-top:12px;">
-      <div>
-        <label class="small-note">Cliente</label>
-        <input id="clientName" type="text" placeholder="Nombre (Opcional)" />
-      </div>
-      <div>
-        <label class="small-note">Dinero recibido</label>
-        <input id="received" type="number" placeholder="0" />
-      </div>
-
-      <div>
-        <div class="total-display" id="live-total">Total: $0</div>
-        <div class="vuelto" id="live-vuelto">Vuelto: $0</div>
-      </div>
-
-      <button id="btn-preview" class="btn btn-primary">👁️ Ver Comprobante</button>
-    </div>
+    <button class="btn-preview" id="btn-preview">👁️ Ver Comprobante</button>
   </div>
 
-  <!-- RIGHT: preview & download -->
-  <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
-    <p id="preview-placeholder" class="small-note">La boleta aparecerá aquí después de generar la vista previa.</p>
+  <!-- Vista Previa -->
+  <div id="preview-area">
+    <p style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;">Vista previa del documento:</p>
+    
+    <!-- ESTO ES LO QUE SE IMPRIMIRÁ -->
+    <div id="receipt-visual">
+      <!-- Se llena con JS -->
+    </div>
 
-    <div id="receipt-preview" aria-hidden="true"></div>
-
-    <button id="btn-download" class="btn btn-success" style="display:none; width:300px;">📥 Descargar PDF (100 × 400 mm)</button>
+    <button class="btn-download" id="btn-download">📥 Descargar PDF (A4)</button>
   </div>
-
 </div>
 
 <script>
-/* --------------------------
-   Datos (productos y combos)
----------------------------*/
-const products = {
-  // Individuales
-  i1: { name: 'Sándwich Gourmet 🥐🍗', price: 5000 },
-  i2: { name: 'Empanada Jamón y Queso 🥟🧀', price: 4500 },
-  i3: { name: 'Aliado Tradicional 🍞🧀', price: 3000 },
-  i4: { name: 'Copa de Vino 🍷', price: 3000 },
-  i5: { name: 'Vaso de Cerveza 🍺', price: 2500 },
-  i6: { name: 'Vaso Bebida 🥤', price: 2000 },
-  i7: { name: 'Té o Café ☕', price: 2000 },
-
-  // Combos
-  c1: { name: 'Combo Sándwich + Vino 🥪+🍷', price: 7500 },
-  c2: { name: 'Combo Sándwich + Cerveza 🥪+🍺', price: 7000 },
-  c3: { name: 'Combo Empanada + Vino 🥟+🍷', price: 7000 },
-  c4: { name: 'Combo Empanada + Cerveza 🥟+🍺', price: 6500 }
-};
-
-/* --------------------------
-   Render inputs
----------------------------*/
-const listInd = document.getElementById('list-individual');
-const listComb = document.getElementById('list-combos');
-
-function createRow(id, item, container){
-  const d = document.createElement('div');
-  d.className = 'row-item';
-  d.innerHTML = `
-    <label title="${escapeHtml(item.name)}">${escapeHtml(item.name)} <span style="color:#999; font-weight:600;">($${item.price.toLocaleString('es-CL')})</span></label>
-    <span class="price">$${item.price.toLocaleString('es-CL')}</span>
-    <input type="number" class="qty" data-id="${id}" data-price="${item.price}" min="0" placeholder="0" />
-  `;
-  container.appendChild(d);
-}
-
-Object.entries(products).forEach(([k,v])=>{
-  if(k.startsWith('i')) createRow(k,v,listInd);
-  else createRow(k,v,listComb);
-});
-
-/* --------------------------
-   Calculation & live UI
----------------------------*/
-function calculate(){
-  let total = 0;
-  const items = [];
-  document.querySelectorAll('input.qty').forEach(inp=>{
-    const q = parseInt(inp.value) || 0;
-    if(q > 0){
-      const price = parseInt(inp.dataset.price);
-      const subtotal = q * price;
-      total += subtotal;
-      // get name text from label
-      const label = inp.parentElement.querySelector('label');
-      const name = label ? label.innerText.split('($')[0].trim() : inp.dataset.id;
-      items.push({ name, qty: q, subtotal });
+  // --- 1. DATOS ---
+  const menuData = [
+    {
+      title: "Para Comer 🍔🥪",
+      items: [
+        { name: 'Sándwich Gourmet', price: 5000, desc: 'Pollo 🍗, tomate 🍅, palta 🥑, cebolla 🧅' },
+        { name: 'Empanada Jamón/Queso', price: 4500, desc: 'Masa de horno 🥟' },
+        { name: 'Aliado Tradicional', price: 3000, desc: 'Jamón 🥓 y queso 🧀' }
+      ]
+    },
+    {
+      title: "Para Beber 🍷🍺",
+      items: [
+        { name: 'Vino (copa) 🍷', price: 3000 },
+        { name: 'Cerveza (vaso) 🍺', price: 2500 },
+        { name: 'Bebida (vaso) 🥤', price: 2000 },
+        { name: 'Té o Café ☕', price: 2000 }
+      ]
+    },
+    {
+      title: "Combos 🥪🍷",
+      items: [
+        { name: 'Sándwich + Vino', price: 7500 },
+        { name: 'Sándwich + Cerveza', price: 7000 },
+        { name: 'Sándwich + Bebida', price: 6500 },
+        { name: 'Empanada + Vino', price: 7000 },
+        { name: 'Empanada + Cerveza', price: 6500 },
+        { name: 'Aliado + Té/Café', price: 5000 }
+      ]
     }
+  ];
+
+  // --- 2. GENERAR HTML DE PRODUCTOS ---
+  const container = document.getElementById('menu-container');
+
+  menuData.forEach(section => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    let html = `<h2>${section.title}</h2>`;
+    
+    section.items.forEach(item => {
+      html += `
+        <div class="item-row">
+          <div class="item-info">
+            <span class="item-name">${item.name}</span>
+            <span class="item-price">$${item.price.toLocaleString('es-CL')}</span>
+            ${item.desc ? `<span class="item-desc">${item.desc}</span>` : ''}
+          </div>
+          <input type="number" class="qty" 
+            data-name="${item.name}" 
+            data-price="${item.price}" 
+            placeholder="0" inputmode="numeric">
+        </div>
+      `;
+    });
+    card.innerHTML = html;
+    container.appendChild(card);
   });
-  const received = parseInt(document.getElementById('received').value) || 0;
-  const vuelto = received - total;
-  const client = document.getElementById('clientName').value || 'Cliente General';
-  return { total, items, received, vuelto, client };
-}
 
-function updateLiveUI(){
-  const d = calculate();
-  document.getElementById('live-total').innerText = `Total: $${d.total.toLocaleString('es-CL')}`;
-  const vEl = document.getElementById('live-vuelto');
-  if(document.getElementById('received').value !== ''){
-    if(d.vuelto >= 0){
-      vEl.innerText = `Vuelto: $${d.vuelto.toLocaleString('es-CL')}`;
-      vEl.style.color = '#27ae60';
-    } else {
-      vEl.innerText = `Falta: $${Math.abs(d.vuelto).toLocaleString('es-CL')}`;
-      vEl.style.color = '#c0392b';
-    }
-  } else {
-    vEl.innerText = 'Vuelto: $0';
-    vEl.style.color = '#27ae60';
+  // --- 3. CÁLCULOS ---
+  function calculate() {
+    let total = 0;
+    let items = [];
+    
+    document.querySelectorAll('.qty').forEach(input => {
+      let val = input.value;
+      if(val && val > 0) {
+        const qty = parseInt(val);
+        const price = parseInt(input.dataset.price);
+        const subtotal = qty * price;
+        total += subtotal;
+        items.push({ name: input.dataset.name, qty, price, subtotal });
+      }
+    });
+
+    const receivedVal = document.getElementById('received').value;
+    const received = receivedVal ? parseInt(receivedVal) : 0;
+    const vuelto = received - total;
+    const client = document.getElementById('clientName').value || 'Cliente General';
+
+    return { total, items, received, vuelto, client };
   }
-}
 
-document.querySelectorAll('input').forEach(i=> i.addEventListener('input', updateLiveUI));
+  function updateUI() {
+    const data = calculate();
+    document.getElementById('total-text').innerText = `Total: $${data.total.toLocaleString('es-CL')}`;
+    
+    const vEl = document.getElementById('vuelto-display');
+    if(document.getElementById('received').value !== '') {
+      vEl.innerText = data.vuelto >= 0 
+        ? `Vuelto: $${data.vuelto.toLocaleString('es-CL')}`
+        : `Falta: $${Math.abs(data.vuelto).toLocaleString('es-CL')}`;
+      vEl.style.color = data.vuelto >= 0 ? '#27ae60' : '#c0392b';
+    } else {
+      vEl.innerText = 'Vuelto: $0';
+      vEl.style.color = '#27ae60';
+    }
+  }
 
-/* --------------------------
-   Build preview HTML
----------------------------*/
-document.getElementById('btn-preview').addEventListener('click', ()=>{
-  const data = calculate();
-  if(data.items.length === 0) return alert('Selecciona al menos un producto.');
+  document.addEventListener('input', (e) => {
+    if(e.target.matches('.qty') || e.target.id === 'received') updateUI();
+  });
 
-  const now = new Date();
-  const fecha = now.toLocaleDateString('es-CL');
-  const hora = now.toLocaleTimeString('es-CL');
+  // --- 4. BOTÓN VISTA PREVIA ---
+  document.getElementById('btn-preview').addEventListener('click', () => {
+    const data = calculate();
+    if(data.items.length === 0) return alert("Selecciona productos primero.");
 
-  const rows = data.items.map(it=>`
-    <tr>
-      <td class="desc" style="padding-right:8px;">${escapeHtml(it.qty + ' x ' + it.name)}</td>
-      <td class="amount">$${it.subtotal.toLocaleString('es-CL')}</td>
-    </tr>
-  `).join('');
+    const now = new Date();
+    
+    // Construimos la tabla
+    const rows = data.items.map(item => `
+      <tr>
+        <td><b>${item.qty}</b> x ${item.name}</td>
+        <td class="text-right no-wrap">$${item.subtotal.toLocaleString('es-CL')}</td>
+      </tr>
+    `).join('');
 
-  const previewHtml = `
-    <div class="ticket-header">
-      <h3>CAFÉ CONCERT ☕🍽️</h3>
-      <div class="ticket-meta">
-        <div style="font-weight:600;">COMPROBANTE DE PEDIDO</div>
-        <div>Fecha: ${fecha} - ${hora}</div>
-        <div>Cliente: ${escapeHtml(data.client)}</div>
+    // HTML limpio y responsivo (ancho 100%)
+    const html = `
+      <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:15px;">
+        <h2 style="margin:0; font-size:1.4rem; color:#2c3e50;">Café Concert ☕</h2>
+        <p style="margin:5px 0 0 0; color:#666; font-size:0.9rem;">COMPROBANTE</p>
+        <p style="margin:0; font-size:0.8rem;">${now.toLocaleDateString('es-CL')} ${now.toLocaleTimeString('es-CL').slice(0,5)}</p>
       </div>
-    </div>
 
-    <table class="ticket-table" role="presentation">
-      <tbody>${rows}</tbody>
-    </table>
-
-    <div class="ticket-total">
-      <div>TOTAL</div>
-      <div>$${data.total.toLocaleString('es-CL')}</div>
-    </div>
-
-    ${data.received > 0 ? `
-      <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:13px;">
-        <div>Efectivo:</div><div>$${data.received.toLocaleString('es-CL')}</div>
+      <div style="margin-bottom:15px; font-size:0.95rem;">
+        <strong>Cliente:</strong> ${data.client}
       </div>
-      <div style="display:flex; justify-content:space-between; margin-top:2px; font-size:13px;">
-        <div>Vuelto:</div><div style="color:${data.vuelto>=0? '#27ae60' : '#c0392b'}">$${data.vuelto.toLocaleString('es-CL')}</div>
+
+      <table class="visual-table">
+        <thead>
+          <tr>
+            <th style="width:70%">Descripción</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+
+      <div style="margin-top:20px; text-align:right;">
+        <div style="font-size:1.3rem; font-weight:bold;">Total: $${data.total.toLocaleString('es-CL')}</div>
+        ${data.received > 0 ? `<div style="font-size:0.9rem; margin-top:5px;">Efectivo: $${data.received.toLocaleString('es-CL')}</div>` : ''}
+        ${data.received > 0 ? `<div style="font-weight:bold; color:${data.vuelto>=0?'green':'red'}">Vuelto: $${data.vuelto.toLocaleString('es-CL')}</div>` : ''}
       </div>
-    ` : ''}
+      
+      <div style="text-align:center; margin-top:30px; font-size:0.8rem; color:#888;">
+        Gracias por su preferencia
+      </div>
+    `;
 
-    <div class="ticket-footer">*** Gracias por su preferencia ***</div>
-  `;
+    const previewDiv = document.getElementById('receipt-visual');
+    previewDiv.innerHTML = html;
+    
+    // Mostrar
+    document.getElementById('preview-area').style.display = 'block';
+    document.getElementById('preview-area').scrollIntoView({ behavior: 'smooth' });
+  });
 
-  const preview = document.getElementById('receipt-preview');
-  preview.innerHTML = previewHtml;
-  preview.style.display = 'block';
-  preview.setAttribute('aria-hidden','false');
-  document.getElementById('preview-placeholder').style.display = 'none';
-  document.getElementById('btn-download').style.display = 'inline-block';
-});
-
-/* ---------------------------------------------------
-   PDF nítido, sin deformación, ancho correcto (180mm)
-----------------------------------------------------*/
-document.getElementById('btn-download').addEventListener('click', async () => {
-    const preview = document.getElementById('receipt-preview');
+  // --- 5. BOTÓN DESCARGA PDF (MÉTODO SEGURO) ---
+  document.getElementById('btn-download').addEventListener('click', async () => {
+    const element = document.getElementById('receipt-visual');
     const btn = document.getElementById('btn-download');
-
+    
+    btn.innerText = "Generando...";
     btn.disabled = true;
-    const oldText = btn.innerText;
-    btn.innerText = "Generando PDF...";
 
     try {
-        // No cambiar el tamaño visual del recibo → evita deformaciones
-        preview.style.background = "#fff";
+      // 1. CAPTURAR LA IMAGEN DE LO QUE SE VE
+      // Scale 2 mejora la calidad de texto
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/png");
 
-        // Captura limpia de html2canvas
-        const canvas = await html2canvas(preview, {
-            scale: 1.7,
-            useCORS: true,
-            backgroundColor: "#fff",
-            logging: false
-        });
+      // 2. CALCULAR DIMENSIONES PARA AJUSTAR AL A4
+      // A4 es 210mm de ancho. Dejamos márgenes (ej. 10mm por lado) => 190mm disponibles
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-        const img = canvas.toDataURL("image/png");
+      const pdfWidth = pdf.internal.pageSize.getWidth();   // 210
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297
+      
+      const margin = 10; 
+      const contentWidth = pdfWidth - (margin * 2); // 190mm
+      
+      // Regla de tres para calcular el alto proporcional
+      const imgProps = pdf.getImageProperties(imgData);
+      const contentHeight = (imgProps.height * contentWidth) / imgProps.width;
 
-        // px → mm conversion
-        const pxToMm = px => px * 0.264583;
+      // 3. AGREGAR IMAGEN AL PDF
+      pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, contentHeight);
 
-        const mmWidth = pxToMm(canvas.width);
-        const mmHeight = pxToMm(canvas.height);
+      // 4. GUARDAR
+      pdf.save(`Pedido_${Date.now()}.pdf`);
 
-        // Crear PDF exacto al tamaño del contenido
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: [mmWidth, mmHeight]
-        });
-
-        // Imagen sin escalar = texto perfecto
-        pdf.addImage(img, "PNG", 0, 0, mmWidth, mmHeight);
-
-        pdf.save(`Pedido_${Date.now()}.pdf`);
-
-    } catch (e) {
-        console.error(e);
-        alert("Error al generar PDF");
+    } catch (err) {
+      console.error(err);
+      alert("Error al generar PDF");
     } finally {
-        btn.disabled = false;
-        btn.innerText = oldText;
+      btn.innerText = "📥 Descargar PDF (A4)";
+      btn.disabled = false;
     }
-});
+  });
 
-/* --------------------------
-   Helpers
----------------------------*/
-function escapeHtml(text){
-  if(!text) return '';
-  return String(text).replace(/[&<>"'`=\/]/g, s => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;','`':'&#96;','=':'&#61;'
-  })[s]);
-}
 </script>
 
 </body>
