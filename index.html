@@ -321,71 +321,57 @@ document.getElementById('btn-preview').addEventListener('click', ()=>{
   document.getElementById('btn-download').style.display = 'inline-block';
 });
 
-/* --------------------------
-   Download PDF (100 x 400 mm)
----------------------------*/
-document.getElementById('btn-download').addEventListener('click', async ()=>{
-  const preview = document.getElementById('receipt-preview');
-  const btn = document.getElementById('btn-download');
-  btn.disabled = true;
-  const oldText = btn.innerText;
-  btn.innerText = 'Generando PDF...';
+/* ---------------------------------------------------
+   PDF nítido, sin deformación, ancho correcto (180mm)
+----------------------------------------------------*/
+document.getElementById('btn-download').addEventListener('click', async () => {
+    const preview = document.getElementById('receipt-preview');
+    const btn = document.getElementById('btn-download');
 
-  try{
-    // ensure visible and white background
-    preview.style.display = 'block';
-    preview.style.background = '#ffffff';
-    // expand visible width so html2canvas uses that layout
-    preview.style.width = '100mm';
-    preview.style.maxWidth = '100mm';
+    btn.disabled = true;
+    const oldText = btn.innerText;
+    btn.innerText = "Generando PDF...";
 
-    // small delay for styles to apply
-    await new Promise(r => setTimeout(r, 120));
+    try {
+        // No cambiar el tamaño visual del recibo → evita deformaciones
+        preview.style.background = "#fff";
 
-    // render canvas
-    const canvas = await html2canvas(preview, {
-      scale: 3,
-      backgroundColor: '#ffffff',
-      useCORS: true
-    });
+        // Captura limpia de html2canvas
+        const canvas = await html2canvas(preview, {
+            scale: 1.7,
+            useCORS: true,
+            backgroundColor: "#fff",
+            logging: false
+        });
 
-    const imgData = canvas.toDataURL('image/png');
+        const img = canvas.toDataURL("image/png");
 
-    // compute height in mm proportionally
-    const pdfWidthMm = 100; // requested width
-    const imgWidthPx = canvas.width;
-    const imgHeightPx = canvas.height;
-    const imgHeightMm = (imgHeightPx * pdfWidthMm) / imgWidthPx;
+        // px → mm conversion
+        const pxToMm = px => px * 0.264583;
 
-    // set target PDF height = 400 mm (as you requested), but if content shorter, use content height
-    const pdfHeightMm = Math.max(400, Math.ceil(imgHeightMm));
+        const mmWidth = pxToMm(canvas.width);
+        const mmHeight = pxToMm(canvas.height);
 
-    // create jsPDF
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-      unit: 'mm',
-      format: [pdfWidthMm, pdfHeightMm],
-      orientation: 'portrait'
-    });
+        // Crear PDF exacto al tamaño del contenido
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: [mmWidth, mmHeight]
+        });
 
-    // add image at full width, centered horizontally at 0
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, imgHeightMm);
+        // Imagen sin escalar = texto perfecto
+        pdf.addImage(img, "PNG", 0, 0, mmWidth, mmHeight);
 
-    // If content shorter than 400mm, it's fine (image sits at top). If taller, image will be clipped;
-    // For long content we could split into pages, but you requested a 400mm tall document specifically.
+        pdf.save(`Pedido_${Date.now()}.pdf`);
 
-    pdf.save(`Pedido_${Date.now()}.pdf`);
-
-  } catch (err){
-    console.error(err);
-    alert('Ocurrió un error generando el PDF.');
-  } finally {
-    // restore preview size for screen
-    preview.style.width = '300px';
-    preview.style.maxWidth = '300px';
-    btn.disabled = false;
-    btn.innerText = oldText || '📥 Descargar PDF (100 × 400 mm)';
-  }
+    } catch (e) {
+        console.error(e);
+        alert("Error al generar PDF");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = oldText;
+    }
 });
 
 /* --------------------------
