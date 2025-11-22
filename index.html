@@ -1,55 +1,126 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pedido Café Concert</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- Dependencias -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
-  /* ESTILOS DE LA APLICACIÓN */
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; padding: 20px; margin: 0; color: #333; }
-  .container { max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 20px; }
-  
-  /* Columna Izquierda: Formulario */
-  .form-section { flex: 1; min-width: 300px; }
-  /* Columna Derecha: Previsualización */
-  .preview-section { flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center; }
-
-  .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
-  h1 { text-align: center; color: #2c3e50; margin-top: 0; }
-  h2 { font-size: 1.1rem; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 0; }
-
-  .row-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #f1f1f1; padding-bottom: 5px; }
-  .row-item label { font-size: 0.9rem; flex: 1; }
-  .row-item input { width: 50px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
-
-  .total-display { font-size: 1.2rem; font-weight: bold; text-align: right; color: #007bff; margin-top: 10px; }
-
-  .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; margin-top: 10px; }
-  .btn-primary { background: #007bff; color: white; }
-  .btn-primary:hover { background: #0056b3; }
-  .btn-success { background: #28a745; color: white; }
-  .btn-success:hover { background: #218838; }
-
-  /* ESTILOS DE LA BOLETA (VISTA PREVIA) */
-  #receipt-preview {
-    background: #fff;
-    width: 300px; /* Ancho fijo tipo boleta */
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-    margin-bottom: 20px;
-    display: none; /* Oculto hasta generar */
-    font-family: 'Courier New', Courier, monospace; /* Fuente tipo ticket */
-    color: #000;
-    border: 1px solid #ddd;
+  :root{
+    --bg: #eef2f5;
+    --card: #ffffff;
+    --accent: #2c3e50;
+    --green: #27ae60;
+    --muted: #777;
   }
 
-  /* Estilos internos del ticket para asegurar impresión */
-  .ticket-header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 10px; }
-  .ticket-body { margin-bottom: 15px; font-size: 13px; }
-  .ticket-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-  .ticket-total { border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 14px; }
-  .ticket-footer { text-align: center; margin-top: 20px; font-size: 11px; color: #444; }
+  /* Global */
+  body{
+    margin:0;
+    padding:14px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: #222;
+  }
+
+  h1{ text-align:center; margin:0 0 12px 0; color:var(--accent); font-size:1.4rem; }
+
+  /* Layout */
+  .container{
+    max-width: 920px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  @media (max-width:880px){
+    .container{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background: var(--card);
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  }
+
+  /* Compact single-line items */
+  .row-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 4px;
+    border-bottom:1px dashed #f1f1f1;
+    min-height:36px;
+  }
+  .row-item:last-child{ border-bottom:none; }
+
+  .row-item label{
+    flex:1 1 auto;
+    font-size:0.95rem;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-right:8px;
+  }
+
+  .row-item .price{ flex:0 0 90px; text-align:right; color:var(--green); font-weight:600; white-space:nowrap; }
+
+  .row-item input.qty{
+    flex: 0 0 64px;
+    width:64px;
+    padding:6px;
+    font-size:0.95rem;
+    text-align:center;
+    border-radius:6px;
+    border:1px solid #ccc;
+    background:#fff;
+  }
+
+  /* Controls/summary */
+  .controls{ display:flex; flex-direction:column; gap:8px; }
+  .controls .input-block input{ width:100%; padding:8px; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; }
+
+  .total-display{ text-align:right; font-weight:700; color:#1f618d; font-size:1.05rem; }
+  .vuelto{ text-align:right; font-weight:700; color:var(--green); font-size:0.98rem; }
+
+  .btn{ width:100%; padding:12px; border-radius:8px; border:none; font-weight:700; cursor:pointer; }
+  .btn-primary{ background:#3498db; color:#fff; }
+  .btn-success{ background:var(--green); color:#fff; }
+
+  /* Receipt preview (on-screen) */
+  #receipt-preview{
+    background:var(--card);
+    width:300px;            /* visible width on screen */
+    padding:14px;
+    border-radius:8px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.12);
+    display:none;
+    color:#000;
+    font-family: Arial, Helvetica, sans-serif;
+    border:1px solid #e2e2e2;
+  }
+
+  .ticket-header{ text-align:center; margin-bottom:8px; }
+  .ticket-header h3{ margin:0; font-size:18px; color:var(--accent); }
+  .ticket-meta{ font-size:12px; color:#666; margin-top:6px; text-align:left; }
+
+  .ticket-table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  .ticket-table td{ padding:4px 0; vertical-align:middle; }
+  .ticket-table .desc{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } /* single-line */
+  .ticket-table .amount{ text-align:right; width:110px; white-space:nowrap; }
+
+  .ticket-total{ border-top:2px solid #000; margin-top:8px; padding-top:8px; font-weight:700; display:flex; justify-content:space-between; font-size:15px; }
+  .ticket-footer{ text-align:center; color:#777; font-size:12px; margin-top:12px; }
+
+  /* Small helper */
+  .small-note{ font-size:0.85rem; color:var(--muted); margin:0; }
 
 </style>
 </head>
@@ -58,230 +129,275 @@
 <h1>☕ Café Concert - Sistema de Pedidos 🍽️</h1>
 
 <div class="container">
-  
-  <!-- SECCIÓN DE INGRESO DE DATOS -->
-  <div class="form-section">
-    
-    <div class="card">
-      <h2>1. Ítems Individuales</h2>
+
+  <!-- LEFT: form -->
+  <div class="card">
+    <h2 style="margin:0 0 10px 0;">1. Selecciona Productos</h2>
+
+    <!-- Individuales -->
+    <div style="margin-bottom:10px;">
+      <h3 style="margin:0 0 8px 0; font-size:1rem;">Ítems Individuales</h3>
       <div id="list-individual"></div>
     </div>
 
-    <div class="card">
-      <h2>2. Combos</h2>
+    <!-- Combos -->
+    <div style="margin-bottom:8px;">
+      <h3 style="margin:0 0 8px 0; font-size:1rem;">Combos</h3>
       <div id="list-combos"></div>
     </div>
 
-    <div class="card">
-      <h2>3. Datos y Totales</h2>
-      <div style="margin-bottom: 10px;">
-        <label style="display:block; font-size:0.9rem;">Cliente:</label>
-        <input type="text" id="clientName" style="width:100%; padding:8px; box-sizing:border-box;" placeholder="Nombre (Opcional)">
+    <!-- Controls / totals -->
+    <div class="controls" style="margin-top:12px;">
+      <div>
+        <label class="small-note">Cliente</label>
+        <input id="clientName" type="text" placeholder="Nombre (Opcional)" />
       </div>
-      <div style="margin-bottom: 10px;">
-        <label style="display:block; font-size:0.9rem;">Dinero Recibido:</label>
-        <input type="number" id="received" style="width:100%; padding:8px; box-sizing:border-box;" placeholder="0">
+      <div>
+        <label class="small-note">Dinero recibido</label>
+        <input id="received" type="number" placeholder="0" />
       </div>
-      
-      <div id="live-total" class="total-display">Total: $0</div>
-      <div id="live-vuelto" style="text-align:right; font-weight:bold; color:#28a745;">Vuelto: $0</div>
 
-      <button class="btn btn-primary" id="btn-preview">👁️ Generar Vista Previa</button>
+      <div>
+        <div class="total-display" id="live-total">Total: $0</div>
+        <div class="vuelto" id="live-vuelto">Vuelto: $0</div>
+      </div>
+
+      <button id="btn-preview" class="btn btn-primary">👁️ Ver Comprobante</button>
     </div>
-
   </div>
 
-  <!-- SECCIÓN DE VISTA PREVIA -->
-  <div class="preview-section">
-    <div id="preview-placeholder" style="color:#777; margin-top:50px;">
-      <em>La boleta aparecerá aquí...</em>
-    </div>
+  <!-- RIGHT: preview & download -->
+  <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+    <p id="preview-placeholder" class="small-note">La boleta aparecerá aquí después de generar la vista previa.</p>
 
-    <!-- AQUÍ SE PINTARÁ LA BOLETA -->
-    <div id="receipt-preview">
-      <!-- Contenido dinámico -->
-    </div>
+    <div id="receipt-preview" aria-hidden="true"></div>
 
-    <!-- BOTÓN DE DESCARGA (Oculto inicialmente) -->
-    <button class="btn btn-success" id="btn-download" style="display:none; max-width: 300px;">
-      📥 Descargar PDF Ahora
-    </button>
+    <button id="btn-download" class="btn btn-success" style="display:none; width:300px;">📥 Descargar PDF (100 × 400 mm)</button>
   </div>
 
 </div>
 
 <script>
-  // --- 1. CONFIGURACIÓN ---
-  const products = {
-    // Individuales
-    i1: { name: 'Sándwich Gourmet', price: 5000 },
-    i2: { name: 'Empanada J/Q', price: 4500 },
-    i3: { name: 'Aliado Tradicional', price: 3000 },
-    i4: { name: 'Copa Vino', price: 3000 },
-    i5: { name: 'Vaso Cerveza', price: 2500 },
-    i6: { name: 'Vaso Bebida', price: 2000 },
-    i7: { name: 'Té o Café', price: 2000 },
-    // Combos
-    c1: { name: 'Combo Sándwich+Vino', price: 7500 },
-    c2: { name: 'Combo Sándwich+Cerveza', price: 7000 },
-    c3: { name: 'Combo Sándwich+Bebida', price: 6500 },
-    c4: { name: 'Combo Empanada+Vino', price: 7000 },
-    c5: { name: 'Combo Empanada+Cerveza', price: 6500 }
-  };
+/* --------------------------
+   Datos (productos y combos)
+---------------------------*/
+const products = {
+  // Individuales
+  i1: { name: 'Sándwich Gourmet 🥐🍗', price: 5000 },
+  i2: { name: 'Empanada Jamón y Queso 🥟🧀', price: 4500 },
+  i3: { name: 'Aliado Tradicional 🍞🧀', price: 3000 },
+  i4: { name: 'Copa de Vino 🍷', price: 3000 },
+  i5: { name: 'Vaso de Cerveza 🍺', price: 2500 },
+  i6: { name: 'Vaso Bebida 🥤', price: 2000 },
+  i7: { name: 'Té o Café ☕', price: 2000 },
 
-  // --- 2. GENERAR INPUTS ---
-  const divInd = document.getElementById('list-individual');
-  const divCom = document.getElementById('list-combos');
+  // Combos
+  c1: { name: 'Combo Sándwich + Vino 🥪+🍷', price: 7500 },
+  c2: { name: 'Combo Sándwich + Cerveza 🥪+🍺', price: 7000 },
+  c3: { name: 'Combo Empanada + Vino 🥟+🍷', price: 7000 },
+  c4: { name: 'Combo Empanada + Cerveza 🥟+🍺', price: 6500 }
+};
 
-  function createInput(id, item, container) {
-    const div = document.createElement('div');
-    div.className = 'row-item';
-    div.innerHTML = `
-      <label>${item.name} ($${item.price})</label>
-      <input type="number" min="0" class="qty-input" data-id="${id}" placeholder="0">
-    `;
-    container.appendChild(div);
-  }
+/* --------------------------
+   Render inputs
+---------------------------*/
+const listInd = document.getElementById('list-individual');
+const listComb = document.getElementById('list-combos');
 
-  Object.entries(products).forEach(([k, v]) => {
-    if(k.startsWith('i')) createInput(k, v, divInd);
-    else createInput(k, v, divCom);
+function createRow(id, item, container){
+  const d = document.createElement('div');
+  d.className = 'row-item';
+  d.innerHTML = `
+    <label title="${escapeHtml(item.name)}">${escapeHtml(item.name)} <span style="color:#999; font-weight:600;">($${item.price.toLocaleString('es-CL')})</span></label>
+    <span class="price">$${item.price.toLocaleString('es-CL')}</span>
+    <input type="number" class="qty" data-id="${id}" data-price="${item.price}" min="0" placeholder="0" />
+  `;
+  container.appendChild(d);
+}
+
+Object.entries(products).forEach(([k,v])=>{
+  if(k.startsWith('i')) createRow(k,v,listInd);
+  else createRow(k,v,listComb);
+});
+
+/* --------------------------
+   Calculation & live UI
+---------------------------*/
+function calculate(){
+  let total = 0;
+  const items = [];
+  document.querySelectorAll('input.qty').forEach(inp=>{
+    const q = parseInt(inp.value) || 0;
+    if(q > 0){
+      const price = parseInt(inp.dataset.price);
+      const subtotal = q * price;
+      total += subtotal;
+      // get name text from label
+      const label = inp.parentElement.querySelector('label');
+      const name = label ? label.innerText.split('($')[0].trim() : inp.dataset.id;
+      items.push({ name, qty: q, subtotal });
+    }
   });
+  const received = parseInt(document.getElementById('received').value) || 0;
+  const vuelto = received - total;
+  const client = document.getElementById('clientName').value || 'Cliente General';
+  return { total, items, received, vuelto, client };
+}
 
-  // --- 3. CÁLCULOS EN VIVO ---
-  function calculate() {
-    let total = 0;
-    let items = [];
-    document.querySelectorAll('.qty-input').forEach(inp => {
-      const val = parseInt(inp.value) || 0;
-      if(val > 0) {
-        const prod = products[inp.dataset.id];
-        const subtotal = val * prod.price;
-        total += subtotal;
-        items.push({ ...prod, qty: val, subtotal });
-      }
-    });
-    
-    const received = parseInt(document.getElementById('received').value) || 0;
-    const vuelto = received - total;
-    const client = document.getElementById('clientName').value || 'Cliente General';
-
-    return { total, items, received, vuelto, client };
-  }
-
-  function updateLiveUI() {
-    const data = calculate();
-    document.getElementById('live-total').innerText = `Total: $${data.total.toLocaleString('es-CL')}`;
-    const vEl = document.getElementById('live-vuelto');
-    
-    if(data.received > 0) {
-      vEl.innerText = data.vuelto >= 0 
-        ? `Vuelto: $${data.vuelto.toLocaleString('es-CL')}` 
-        : `Falta: $${Math.abs(data.vuelto).toLocaleString('es-CL')}`;
-      vEl.style.color = data.vuelto >= 0 ? '#28a745' : '#dc3545';
+function updateLiveUI(){
+  const d = calculate();
+  document.getElementById('live-total').innerText = `Total: $${d.total.toLocaleString('es-CL')}`;
+  const vEl = document.getElementById('live-vuelto');
+  if(document.getElementById('received').value !== ''){
+    if(d.vuelto >= 0){
+      vEl.innerText = `Vuelto: $${d.vuelto.toLocaleString('es-CL')}`;
+      vEl.style.color = '#27ae60';
     } else {
-      vEl.innerText = "Vuelto: $0";
-      vEl.style.color = "#28a745";
+      vEl.innerText = `Falta: $${Math.abs(d.vuelto).toLocaleString('es-CL')}`;
+      vEl.style.color = '#c0392b';
     }
+  } else {
+    vEl.innerText = 'Vuelto: $0';
+    vEl.style.color = '#27ae60';
   }
+}
 
-  document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateLiveUI));
+document.querySelectorAll('input').forEach(i=> i.addEventListener('input', updateLiveUI));
 
-  // --- 4. GENERAR VISTA PREVIA (PASO CLAVE) ---
-  document.getElementById('btn-preview').addEventListener('click', () => {
-    const data = calculate();
-    if(data.items.length === 0) return alert("Selecciona productos primero.");
+/* --------------------------
+   Build preview HTML
+---------------------------*/
+document.getElementById('btn-preview').addEventListener('click', ()=>{
+  const data = calculate();
+  if(data.items.length === 0) return alert('Selecciona al menos un producto.');
 
-    const now = new Date();
-    const fecha = now.toLocaleDateString('es-CL');
-    const hora = now.toLocaleTimeString('es-CL');
+  const now = new Date();
+  const fecha = now.toLocaleDateString('es-CL');
+  const hora = now.toLocaleTimeString('es-CL');
 
-    // Construimos el HTML INTERNO de la boleta
-    // Usamos <table> para garantizar alineación en el PDF
-    let itemsHtml = data.items.map(i => `
-      <tr>
-        <td style="padding:2px 0;">${i.qty} x ${i.name}</td>
-        <td style="text-align:right;">$${i.subtotal.toLocaleString('es-CL')}</td>
-      </tr>
-    `).join('');
+  const rows = data.items.map(it=>`
+    <tr>
+      <td class="desc" style="padding-right:8px;">${escapeHtml(it.qty + ' x ' + it.name)}</td>
+      <td class="amount">$${it.subtotal.toLocaleString('es-CL')}</td>
+    </tr>
+  `).join('');
 
-    const receiptHtml = `
-      <div class="ticket-header">
-        <h3 style="margin:0; font-size:18px;">CAFÉ CONCERT</h3>
-        <p style="margin:2px 0 10px 0; font-size:12px;">COMPROBANTE DE PEDIDO</p>
-        <div style="font-size:12px; text-align:left;">
-          <p style="margin:2px 0;">FECHA: ${fecha} ${hora}</p>
-          <p style="margin:2px 0;">CLIENTE: ${data.client}</p>
-        </div>
+  const previewHtml = `
+    <div class="ticket-header">
+      <h3>CAFÉ CONCERT ☕🍽️</h3>
+      <div class="ticket-meta">
+        <div style="font-weight:600;">COMPROBANTE DE PEDIDO</div>
+        <div>Fecha: ${fecha} - ${hora}</div>
+        <div>Cliente: ${escapeHtml(data.client)}</div>
       </div>
+    </div>
 
-      <table style="width:100%; font-size:12px; border-collapse:collapse;">
-        <tbody>${itemsHtml}</tbody>
-      </table>
+    <table class="ticket-table" role="presentation">
+      <tbody>${rows}</tbody>
+    </table>
 
-      <div class="ticket-total">
-        <div style="display:flex; justify-content:space-between;">
-          <span>TOTAL:</span>
-          <span>$${data.total.toLocaleString('es-CL')}</span>
-        </div>
-        ${data.received > 0 ? `
-        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:normal; margin-top:5px;">
-          <span>Efectivo:</span>
-          <span>$${data.received.toLocaleString('es-CL')}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:normal;">
-          <span>Vuelto:</span>
-          <span>$${data.vuelto.toLocaleString('es-CL')}</span>
-        </div>
-        ` : ''}
+    <div class="ticket-total">
+      <div>TOTAL</div>
+      <div>$${data.total.toLocaleString('es-CL')}</div>
+    </div>
+
+    ${data.received > 0 ? `
+      <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:13px;">
+        <div>Efectivo:</div><div>$${data.received.toLocaleString('es-CL')}</div>
       </div>
-
-      <div class="ticket-footer">
-        <p>*** Gracias por su preferencia ***</p>
+      <div style="display:flex; justify-content:space-between; margin-top:2px; font-size:13px;">
+        <div>Vuelto:</div><div style="color:${data.vuelto>=0? '#27ae60' : '#c0392b'}">$${data.vuelto.toLocaleString('es-CL')}</div>
       </div>
-    `;
+    ` : ''}
 
-    // Inyectar al DOM visible
-    const previewDiv = document.getElementById('receipt-preview');
-    previewDiv.innerHTML = receiptHtml;
-    
-    // Mostrar elementos
-    document.getElementById('preview-placeholder').style.display = 'none';
-    previewDiv.style.display = 'block';
-    document.getElementById('btn-download').style.display = 'block';
-  });
+    <div class="ticket-footer">*** Gracias por su preferencia ***</div>
+  `;
 
-  // --- 5. DESCARGAR LO QUE YA VEMOS ---
-  document.getElementById('btn-download').addEventListener('click', async () => {
-    const element = document.getElementById('receipt-preview');
-    const btn = document.getElementById('btn-download');
-    
-    btn.innerText = "Generando...";
-    btn.disabled = true;
+  const preview = document.getElementById('receipt-preview');
+  preview.innerHTML = previewHtml;
+  preview.style.display = 'block';
+  preview.setAttribute('aria-hidden','false');
+  document.getElementById('preview-placeholder').style.display = 'none';
+  document.getElementById('btn-download').style.display = 'inline-block';
+});
 
-    const opt = {
-      margin:       0,
-      filename:     `Pedido_${Date.now()}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: 2, 
-        useCORS: true,
-        logging: false
-      },
-      jsPDF:        { unit: 'mm', format: [80, 200], orientation: 'portrait' }
-    };
+/* --------------------------
+   Download PDF (100 x 400 mm)
+---------------------------*/
+document.getElementById('btn-download').addEventListener('click', async ()=>{
+  const preview = document.getElementById('receipt-preview');
+  const btn = document.getElementById('btn-download');
+  btn.disabled = true;
+  const oldText = btn.innerText;
+  btn.innerText = 'Generando PDF...';
 
-    try {
-      await html2pdf().set(opt).from(element).save();
-    } catch (err) {
-      console.error(err);
-      alert("Error al descargar");
-    } finally {
-      btn.innerText = "📥 Descargar PDF Ahora";
-      btn.disabled = false;
-    }
-  });
+  try{
+    // ensure visible and white background
+    preview.style.display = 'block';
+    preview.style.background = '#ffffff';
+    // expand visible width so html2canvas uses that layout
+    preview.style.width = '100mm';
+    preview.style.maxWidth = '100mm';
 
+    // small delay for styles to apply
+    await new Promise(r => setTimeout(r, 120));
+
+    // render canvas
+    const canvas = await html2canvas(preview, {
+      scale: 3,
+      backgroundColor: '#ffffff',
+      useCORS: true
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+
+    // compute height in mm proportionally
+    const pdfWidthMm = 100; // requested width
+    const imgWidthPx = canvas.width;
+    const imgHeightPx = canvas.height;
+    const imgHeightMm = (imgHeightPx * pdfWidthMm) / imgWidthPx;
+
+    // set target PDF height = 400 mm (as you requested), but if content shorter, use content height
+    const pdfHeightMm = Math.max(400, Math.ceil(imgHeightMm));
+
+    // create jsPDF
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      unit: 'mm',
+      format: [pdfWidthMm, pdfHeightMm],
+      orientation: 'portrait'
+    });
+
+    // add image at full width, centered horizontally at 0
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, imgHeightMm);
+
+    // If content shorter than 400mm, it's fine (image sits at top). If taller, image will be clipped;
+    // For long content we could split into pages, but you requested a 400mm tall document specifically.
+
+    pdf.save(`Pedido_${Date.now()}.pdf`);
+
+  } catch (err){
+    console.error(err);
+    alert('Ocurrió un error generando el PDF.');
+  } finally {
+    // restore preview size for screen
+    preview.style.width = '300px';
+    preview.style.maxWidth = '300px';
+    btn.disabled = false;
+    btn.innerText = oldText || '📥 Descargar PDF (100 × 400 mm)';
+  }
+});
+
+/* --------------------------
+   Helpers
+---------------------------*/
+function escapeHtml(text){
+  if(!text) return '';
+  return String(text).replace(/[&<>"'`=\/]/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;','`':'&#96;','=':'&#61;'
+  })[s]);
+}
 </script>
+
 </body>
 </html>
